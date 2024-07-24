@@ -1,0 +1,375 @@
+DROP DATABASE IF EXISTS kool_kids;
+CREATE DATABASE kool_kidz;
+USE kool_kidz;
+
+DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS holds;
+DROP TABLE IF EXISTS cart;
+DROP TABLE IF EXISTS payment;
+DROP TABLE IF EXISTS shipment1;
+DROP TABLE IF EXISTS tracking;
+DROP TABLE IF EXISTS manager;
+DROP TABLE IF EXISTS staff;
+DROP TABLE IF EXISTS address1;
+DROP TABLE IF EXISTS living_area;
+DROP TABLE IF EXISTS contain;
+DROP TABLE IF EXISTS wishlist;
+DROP TABLE IF EXISTS customer;
+DROP TABLE IF EXISTS media_stock;
+DROP TABLE IF EXISTS inventory;
+DROP TABLE IF EXISTS employee;
+DROP TABLE IF EXISTS book;
+DROP TABLE IF EXISTS graphic_novel;
+DROP TABLE IF EXISTS textbook;
+DROP TABLE IF EXISTS media1;
+DROP TABLE IF EXISTS department;
+
+
+
+CREATE TABLE customer
+(customer_id CHAR(9) NOT NULL UNIQUE PRIMARY KEY,
+fname VARCHAR(10),
+lname VARCHAR(15),
+dob DATE,
+email VARCHAR(100),
+phone_number VARCHAR(10)
+);
+
+CREATE TABLE cart
+(cart_id CHAR(9) NOT NULL UNIQUE PRIMARY KEY,
+cust_id CHAR(9),
+CONSTRAINT fk_cust_id FOREIGN KEY (cust_id) REFERENCES customer(customer_id)
+);
+
+CREATE TABLE tracking
+(tracking_num VARCHAR(10) NOT NULL UNIQUE PRIMARY KEY,
+delivery_type VARCHAR(10),
+shipment_date DATE
+);
+
+
+CREATE TABLE address1
+(address_id CHAR(9) NOT NULL UNIQUE PRIMARY KEY,
+street_name VARCHAR(18),
+suburb VARCHAR(15),
+postcode CHAR(4) NOT NULL
+);
+
+CREATE TABLE shipment1
+(shipment_id CHAR(9) NOT NULL UNIQUE PRIMARY KEY,
+actual_delivery_date DATE,
+address_id CHAR(9),
+tracking_num VARCHAR(10),
+CONSTRAINT fk_ship_addyID FOREIGN KEY (address_id) REFERENCES address1(address_id),
+CONSTRAINT fk_tracking_num FOREIGN KEY (tracking_num) REFERENCES tracking(tracking_num)
+);
+
+CREATE TABLE orders
+(order_id CHAR(9) NOT NULL UNIQUE PRIMARY KEY,
+ amount INT, 
+ o_status VARCHAR(10),
+ o_date DATE, 
+ cart_id CHAR(9) NOT NULL, 
+ customer_id CHAR(9) NOT NULL, 
+ shipment_id  CHAR(9) NOT NULL,
+ CONSTRAINT fk_order_cartID FOREIGN KEY (cart_id) REFERENCES cart(cart_id),
+ CONSTRAINT fk_order_custID FOREIGN KEY (customer_id) REFERENCES customer(customer_id),
+ CONSTRAINT fk_order_shipID FOREIGN KEY (shipment_id) REFERENCES shipment1(shipment_id)
+);
+
+CREATE TABLE payment
+(payment_id CHAR(9) NOT NULL UNIQUE,
+order_id CHAR(9) NOT NULL UNIQUE,
+amount INT,
+p_date DATE,
+address_id CHAR(9),
+CONSTRAINT fk_pay_addyID FOREIGN KEY (address_id) REFERENCES address1(address_id),
+PRIMARY KEY(payment_id, order_id)
+);
+
+CREATE TABLE living_area
+(postcode CHAR(4) NOT NULL UNIQUE PRIMARY KEY,
+city VARCHAR(18)
+);
+
+CREATE TABLE wishlist
+(wishlist_id CHAR(12) NOT NULL UNIQUE PRIMARY KEY,
+total_price INT,
+total_items SMALLINT,
+cust_id CHAR(9),
+FOREIGN KEY (cust_id) REFERENCES customer(customer_id)
+);
+
+CREATE TABLE department
+(dID CHAR(9) NOT NULL UNIQUE PRIMARY KEY,
+department_name VARCHAR(15)
+);
+
+CREATE TABLE employee
+(IRD CHAR(9) NOT NULL UNIQUE PRIMARY KEY,
+jobTitle VARCHAR(30),
+dID CHAR(9),
+CONSTRAINT fk_dID FOREIGN KEY (dID) REFERENCES department(dID)
+);
+
+CREATE TABLE inventory
+(inventory_id CHAR(9) NOT NULL UNIQUE PRIMARY KEY,
+unit_num INT,
+eIRD CHAR(9),
+CONSTRAINT fk_eIRD FOREIGN KEY (eIRD) REFERENCES employee(IRD)
+);
+
+CREATE TABLE media1
+(media_id CHAR(9) NOT NULL UNIQUE PRIMARY KEY,
+title CHAR(25) NOT NULL,
+fname VARCHAR(10),
+lname VARCHAR(15),
+publisher  CHAR(25),
+descr VARCHAR(150),
+ISBN  CHAR(13),
+unit_price SMALLINT
+);
+
+CREATE TABLE media_stock
+(media_id CHAR(9) NOT NULL UNIQUE,
+inventory_id CHAR(9) NOT NULL UNIQUE,
+in_stock BOOLEAN,
+CONSTRAINT fk_stock_invID FOREIGN KEY (inventory_id) REFERENCES inventory(inventory_id),
+CONSTRAINT fk_stock_medID FOREIGN KEY (media_id) REFERENCES media1(media_id),
+PRIMARY KEY(media_id, inventory_id)
+);
+
+CREATE TABLE book
+(media_id CHAR(9) NOT NULL UNIQUE,
+genre VARCHAR(20),
+CONSTRAINT fk_book_medID FOREIGN KEY (media_id) REFERENCES media1(media_id),
+PRIMARY KEY(media_id, genre)
+);
+
+CREATE TABLE graphic_novel
+(media_id CHAR(9) NOT NULL UNIQUE PRIMARY KEY,
+artist VARCHAR(25),
+CONSTRAINT fk_graphic_medID FOREIGN KEY (media_id) REFERENCES media1(media_id)
+);
+
+CREATE TABLE textbook
+(media_id CHAR(9) NOT NULL UNIQUE PRIMARY KEY,
+t_subject VARCHAR(20),
+CONSTRAINT fk_txtbk_medID FOREIGN KEY (media_id) REFERENCES media1(media_id)
+);
+
+CREATE TABLE staff
+(IRD CHAR(9) NOT NULL UNIQUE PRIMARY KEY,
+fname VARCHAR(10),
+lname VARCHAR(15),
+email VARCHAR(100),
+phone_number VARCHAR(10),
+salary INT,
+address_id CHAR(9),
+CONSTRAINT fk_addy FOREIGN KEY (address_id) REFERENCES address1(address_id)
+);
+
+CREATE TABLE manager
+(IRD CHAR(9) NOT NULL UNIQUE PRIMARY KEY,
+manager_level INT,
+dID CHAR(9) NOT NULL,
+CONSTRAINT fk_manager_staff_ID FOREIGN KEY (IRD) REFERENCES staff(IRD),
+CONSTRAINT fk_manager_dID FOREIGN KEY (dID) REFERENCES department(dID) 
+);
+
+CREATE TABLE contain
+(wish_id CHAR(12) NOT NULL,
+med_id CHAR(9) NOT NULL,
+CONSTRAINT fk_wish FOREIGN KEY (wish_id) REFERENCES wishlist(wishlist_id),
+CONSTRAINT fk_contain_medID FOREIGN KEY (med_id) REFERENCES media1(media_id),
+PRIMARY KEY (wish_id, med_id)
+);
+
+CREATE TABLE holds
+(cart_id CHAR(9) NOT NULL,
+med_id CHAR(9) NOT NULL ,
+quantity INT,
+CONSTRAINT fk_cartID FOREIGN KEY (cart_id) REFERENCES cart(cart_id),
+CONSTRAINT fk_holds_medID FOREIGN KEY (med_id) REFERENCES media1(media_id),
+PRIMARY KEY (cart_id, med_id)
+);
+
+INSERT INTO customer (customer_id, fname, lname, dob, email, phone_number)
+VALUES
+('CUST001', 'John', 'Doe', '1990-01-01', 'john.doe@example.com', '1234567890'),
+('CUST002', 'Alice', 'Smith', '1985-05-10', 'alice.smith@example.com', '9876543210'),
+('CUST003', 'Michael', 'Johnson', '1992-09-15', 'michael.johnson@example.com', '5551234567'),
+('CUST004', 'Emily', 'Brown', '1988-12-20', 'emily.brown@example.com', '7894561230'),
+('CUST005', 'Daniel', 'Davis', '1995-06-25', 'daniel.davis@example.com', '3216549870');
+
+INSERT INTO cart (cart_id, cust_id)
+VALUES
+('CART001', 'CUST001'),
+('CART002', 'CUST002'),
+('CART003', 'CUST003'),
+('CART004', 'CUST004'),
+('CART005', 'CUST005');
+
+INSERT INTO tracking (tracking_num, delivery_type, shipment_date)
+VALUES
+('TRACK001', 'Standard', '2023-05-18'),
+('TRACK002', 'Express', '2023-05-19'),
+('TRACK003', 'Standard', '2023-05-20'),
+('TRACK004', 'Express', '2023-05-21'),
+('TRACK005', 'Standard', '2023-05-22');
+
+INSERT INTO address1 (address_id, street_name, suburb, postcode)
+VALUES
+('ADDR001', '123 Main Street', 'Cityville', '1234'),
+('ADDR002', '456 Elm Avenue', 'Townsville', '5678'),
+('ADDR003', '789 Oak Lane', 'Villageville', '9012'),
+('ADDR004', '321 Pine Road', 'Hamletville', '3456'),
+('ADDR005', '654 Maple Court', 'Countryside', '7890');
+
+INSERT INTO shipment1 (shipment_id, actual_delivery_date, address_id, tracking_num)
+VALUES
+('SHIP001', '2023-05-19', 'ADDR001', 'TRACK001'),
+('SHIP002', '2023-05-20', 'ADDR002', 'TRACK002'),
+('SHIP003', '2023-05-21', 'ADDR003', 'TRACK003'),
+('SHIP004', '2023-05-22', 'ADDR004', 'TRACK004'),
+('SHIP005', '2023-05-23', 'ADDR005', 'TRACK005');
+
+INSERT INTO orders (order_id, amount, o_status, o_date, cart_id, customer_id, shipment_id)
+VALUES
+('ORDER001', 100, 'Pending', '2023-05-18', 'CART001', 'CUST001', 'SHIP001'),
+('ORDER002', 150, 'Completed', '2023-05-19', 'CART002', 'CUST002', 'SHIP002'),
+('ORDER003', 80, 'Pending', '2023-05-20', 'CART003', 'CUST003', 'SHIP003'),
+('ORDER004', 200, 'Completed', '2023-05-21', 'CART004', 'CUST004', 'SHIP004'),
+('ORDER005', 120, 'Pending', '2023-05-22', 'CART005', 'CUST005', 'SHIP005');
+
+INSERT INTO payment (payment_id, order_id, amount, p_date, address_id)
+VALUES
+('PAYMENT01', 'ORDER001', 100, '2023-05-18', 'ADDR001'),
+('PAYMENT02', 'ORDER002', 150, '2023-05-19', 'ADDR002'),
+('PAYMENT03', 'ORDER003', 80, '2023-05-20', 'ADDR003'),
+('PAYMENT04', 'ORDER004', 200, '2023-05-21', 'ADDR004'),
+('PAYMENT05', 'ORDER005', 120, '2023-05-22', 'ADDR005');
+
+INSERT INTO living_area (postcode, city)
+VALUES
+('1234', 'Cityville'),
+('5678', 'Townsville'),
+('9012', 'Villageville'),
+('3456', 'Hamletville'),
+('7890', 'Countryside');
+
+INSERT INTO wishlist (wishlist_id, total_price, total_items, cust_id)
+VALUES
+('WISHLIST001', 0, 0, 'CUST001'),
+('WISHLIST002', 0, 0, 'CUST002'),
+('WISHLIST003', 0, 0, 'CUST003'),
+('WISHLIST004', 0, 0, 'CUST004'),
+('WISHLIST005', 0, 0, 'CUST005');
+
+INSERT INTO department (dID, department_name)
+VALUES
+('DEPT001', 'Sales'),
+('DEPT002', 'Marketing'),
+('DEPT003', 'Finance'),
+('DEPT004', 'Human Resources'),
+('DEPT005', 'Operations');
+
+INSERT INTO employee (IRD, jobTitle, dID)
+VALUES
+('EMP001', 'Sales Associate', 'DEPT001'),
+('EMP002', 'Marketing Specialist', 'DEPT002'),
+('EMP003', 'Accountant', 'DEPT003'),
+('EMP004', 'HR Manager', 'DEPT004'),
+('EMP005', 'Operations Supervisor', 'DEPT005');
+
+INSERT INTO inventory (inventory_id, unit_num, eIRD)
+VALUES
+('INV001', 10, 'EMP001'),
+('INV002', 5, 'EMP002'),
+('INV003', 8, 'EMP003'),
+('INV004', 12, 'EMP004'),
+('INV005', 15, 'EMP005');
+
+INSERT INTO media1 (media_id, title, fname, lname, publisher, descr, ISBN, unit_price)
+VALUES
+('MEDIA001', 'Book Title 1', 'Author 1', 'LastName 1', 'Publisher 1', 'Description 1', '1234567890123', 20),
+('MEDIA002', 'Book Title 2', 'Author 2', 'LastName 2', 'Publisher 2', 'Description 2', '2345678901234', 25),
+('MEDIA003', 'Book Title 3', 'Author 3', 'LastName 3', 'Publisher 3', 'Description 3', '3456789012345', 30),
+('MEDIA004', 'Book Title 4', 'Author 4', 'LastName 4', 'Publisher 4', 'Description 4', '4567890123456', 35),
+('MEDIA005', 'Book Title 5', 'Author 5', 'LastName 5', 'Publisher 5', 'Description 5', '5678901234567', 40),
+('MEDIA006', 'Book Title 6', 'Author 6', 'LastName 6', 'Publisher 6', 'Description 6', '8244820583293', 20),
+('MEDIA007', 'Book Title 7', 'Author 7', 'LastName 7', 'Publisher 7', 'Description 7', '6948303948502', 25),
+('MEDIA008', 'Book Title 8', 'Author 8', 'LastName 8', 'Publisher 8', 'Description 8', '4309385020133', 30),
+('MEDIA009', 'Book Title 9', 'Author 9', 'LastName 9', 'Publisher 9', 'Description 9', '3960509382909', 35),
+('MEDIA010', 'Book Title 10', 'Author 10', 'LastName 10', 'Publisher 10', 'Description 10', '3960509382908', 40),
+('MEDIA011', 'Book Title 11', 'Author 11', 'LastName 11', 'Publisher 11', 'Description 11', '8244820583293', 20),
+('MEDIA012', 'Book Title 12', 'Author 12', 'LastName 12', 'Publisher 12', 'Description 12', '6948303948502', 25),
+('MEDIA013', 'Book Title 13', 'Author 13', 'LastName 13', 'Publisher 13', 'Description 13', '4309385020133', 30),
+('MEDIA014', 'Book Title 14', 'Author 14', 'LastName 14', 'Publisher 14', 'Description 14', '3960509382909', 35),
+('MEDIA015', 'Book Title 15', 'Author 15', 'LastName 15', 'Publisher 15', 'Description 15', '3960509382908', 40);
+
+INSERT INTO media_stock (media_id, inventory_id, in_stock)
+VALUES
+('MEDIA001', 'INV001', true),
+('MEDIA002', 'INV002', true),
+('MEDIA003', 'INV003', true),
+('MEDIA004', 'INV004', true),
+('MEDIA005', 'INV005', true);
+
+INSERT INTO book (media_id, genre)
+VALUES
+('MEDIA001', 'Fiction'),
+('MEDIA002', 'Mystery'),
+('MEDIA003', 'Science Fiction'),
+('MEDIA004', 'Romance'),
+('MEDIA005', 'Thriller');
+
+INSERT INTO graphic_novel (media_id, artist)
+VALUES
+('MEDIA006', 'Artist 1'),
+('MEDIA007', 'Artist 2'),
+('MEDIA008', 'Artist 3'),
+('MEDIA009', 'Artist 4'),
+('MEDIA010', 'Artist 5');
+
+INSERT INTO textbook (media_id, t_subject)
+VALUES
+('MEDIA011', 'Mathematics'),
+('MEDIA012', 'Science'),
+('MEDIA013', 'History'),
+('MEDIA014', 'English'),
+('MEDIA015', 'Computer Science');
+
+INSERT INTO staff (IRD, fname, lname, email, phone_number, salary, address_id)
+VALUES
+('EMP006', 'Sarah', 'Johnson', 'sarah.johnson@example.com', '1234567890', 60000, 'ADDR001'),
+('EMP007', 'David', 'Wilson', 'david.wilson@example.com', '9876543210', 55000, 'ADDR002'),
+('EMP008', 'Jennifer', 'Martinez', 'jennifer.martinez@example.com', '5551234567', 50000, 'ADDR003'),
+('EMP009', 'Robert', 'Taylor', 'robert.taylor@example.com', '7894561230', 65000, 'ADDR004'),
+('EMP010', 'Karen', 'Anderson', 'karen.anderson@example.com', '3216549870', 70000, 'ADDR005');
+
+INSERT INTO manager (IRD, manager_level, dID)
+VALUES
+('EMP006', 2, 'DEPT001'),
+('EMP007', 3, 'DEPT002'),
+('EMP008', 2, 'DEPT003'),
+('EMP009', 3, 'DEPT004'),
+('EMP010', 2, 'DEPT005');
+
+INSERT INTO contain (wish_id, med_id)
+VALUES
+('WISHLIST001', 'MEDIA001'),
+('WISHLIST001', 'MEDIA002'),
+('WISHLIST002', 'MEDIA003'),
+('WISHLIST002', 'MEDIA004'),
+('WISHLIST003', 'MEDIA005');
+
+INSERT INTO holds (cart_id, med_id, quantity)
+VALUES
+('CART001', 'MEDIA001', 2),
+('CART001', 'MEDIA002', 1),
+('CART002', 'MEDIA003', 3),
+('CART002', 'MEDIA004', 2),
+('CART003', 'MEDIA005', 1);
+
+COMMIT;
